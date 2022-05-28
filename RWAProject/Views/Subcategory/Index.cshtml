@@ -1,0 +1,101 @@
+﻿
+@{
+    ViewBag.Title = "Subcategories";
+}
+
+@section scripts{
+    <script>
+        const dataTableConfig = {
+            ajax: {
+                url: '/api/subcategories',
+                dataSrc: ''
+            },
+            columns: [
+                { data: 'Name' },
+                { data: 'Category' },
+                {
+                    data: '',
+                    render: function (data, type, subcategory) {
+                        return `<button
+                                            class="btn btn-primary"
+                                            data-id=${subcategory.ID}>
+                                            Edit
+                                        </button>`;
+                    }
+                },
+                {
+                    data: '',
+                    render: function (data, type, subcategory) {
+                        return `<button
+                                            class="btn btn-danger"
+                                            data-id=${subcategory.ID}
+                                            data-name=${subcategory.Name}>
+                                            Delete
+                                        </button>`;
+                    }
+                }
+            ]
+        }
+
+        let btnDelete;
+
+        const table = $('.table').DataTable(dataTableConfig)
+            .on('click', '.btn-primary', onEditClick)
+            .on('click', '.btn-danger', onDeleteClick);
+
+        function onEditClick(e) {
+            const { id } = this.dataset;
+            window.location.href = '/Subcategory/Edit/' + id;
+        }
+
+        function onDeleteClick(e) {
+            btnDelete = this;
+            const { id, name } = btnDelete.dataset;
+
+            if (confirm(`Delete subcategory ${name}?`)) {
+                deleteSubcategory(id);
+            }
+        }
+
+        function deleteSubcategory(id) {
+            $.ajax({
+                url: `/api/subcategories/` + id,
+                method: "delete"
+            })
+
+                .done(function (message) {
+                    console.log(message);
+                    table.row($(btnDelete).parents("tr"))
+                        .remove()
+                        .draw();
+                })
+                .fail(function () {
+                    console.log("Subcategory is not deleted.");
+                });
+        }
+    </script>
+}
+
+<h2>Subcategories</h2>
+
+<p>
+    @Html.ActionLink(
+     linkText: "Create new",
+     actionName: "Create",
+     controllerName: "Subcategory",
+     htmlAttributes: new { @class = "btn btn-success" },
+     routeValues: new { })
+</p>
+
+<div class="jumbotron">
+    <table class="table">
+        <thead>
+            <tr>
+                <td>Name</td>
+                <td>Category</td>
+                <td></td>
+                <td></td>
+            </tr>
+        </thead>
+    </table>
+</div>

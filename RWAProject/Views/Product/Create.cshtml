@@ -1,0 +1,197 @@
+﻿@model RWAProject.Models.ViewModels.ProductCreateEditVm
+
+@{
+    ViewBag.Title = "Create";
+
+    SelectList ddlCategories = new SelectList(
+    items: Model.Categories,
+    dataTextField: "Name",
+    dataValueField: "ID");
+}
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+
+    <script>
+        window.addEventListener('DOMContentLoaded', (event) => {
+            $('#ddlSubcategories').attr('disabled', 'disabled');
+        });
+
+        $("#ddlCategories").on("change", function () {
+            reloadSubcategories();
+        });
+
+        function reloadSubcategories() {
+
+            $('#ddlSubcategories').children().remove();
+
+            $.ajax({
+                url: '/api/subcategories',
+                type: 'get',
+                success: function (result) {
+
+                    let numberOfSubcategories = 0;
+
+                    $.each(result, function (i, item) {
+
+                        let id = item['ID'];
+                        let name = item['Name'];
+                        let category = item['Category'];
+
+                        let selectedCategory = $("#ddlCategories").find("option:selected").text();
+
+                        if (category == selectedCategory) {
+                            $('#ddlSubcategories').append($('<option>', {
+                                value: id,
+                                text: name
+                            }));
+                            numberOfSubcategories++;
+                        }
+                    });
+
+                    if (numberOfSubcategories > 0) {
+                        $('#ddlSubcategories').removeAttr('disabled');
+                    }
+                    else {
+                        $('#ddlSubcategories').append($('<option>', {
+                            text: 'No subcategories'
+                        }));
+                        $('#ddlSubcategories').attr('disabled', 'disabled');
+                    }
+                }
+            });
+        }
+
+        $('form').on('submit', function (e) {
+
+            e.preventDefault();
+
+            const form = $(e.target);
+
+            const product = {};
+
+            if (form.valid()) {
+
+                $('.validation-summary-errors').addClass("hidden");
+                $('.errorIndicator').addClass('hidden');
+
+                const params = form.serializeArray();
+
+                params.forEach(param => {
+                    if (param.name.lastIndexOf('__') !== -1) {
+                        return;
+                    }
+
+                    let propertyName = param.name.substr(param.name.lastIndexOf('.') + 1);
+                    if (propertyName === 'ddlSubcategories') {
+                        propertyName = 'SubcategoryID';
+                    }
+                    if (propertyName !== 'ddlCategories') {
+                        product[propertyName] = param.value;
+                    }
+                })
+
+                $.ajax({
+                    url: `/api/products/`,
+                    data: product,
+                    method: 'post',
+                    statusCode: {
+                        200: function () {
+                            $('.badge').html("Product successfully created!");
+                            setTimeout(function () {
+                                window.location = '@Url.Action(controllerName:"Product", actionName:"Index")'
+                            }, 2000)
+                        },
+                        400: function () {
+                            $('.badge').html("Product was not created. :(");
+                        }
+                    }
+                })
+            }
+            else {
+                $('.validation-summary-errors').removeClass('hidden');
+                $('.field-validation-error').removeClass('hidden');
+            }
+        })
+    </script>
+
+}
+
+
+<h2>Create</h2>
+<span class="badge badge-primary"></span>
+
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4>Product</h4>
+        <hr />
+        @Html.ValidationSummary(false, "Warning", new { @class = "text-danger hidden" })
+        <div class="form-group">
+            @Html.LabelFor(model => model.Product.Name, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10 d-flex-row">
+                @Html.EditorFor(model => model.Product.Name, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Product.Name, "*", new { @class = "text-danger hidden errorIndicator" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Product.Number, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10 d-flex-row">
+                @Html.EditorFor(model => model.Product.Number, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Product.Number, "*", new { @class = "text-danger hidden errorIndicator" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Product.Color, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10 d-flex-row">
+                @Html.EditorFor(model => model.Product.Color, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Product.Color, "*", new { @class = "text-danger hidden errorIndicator" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Product.MinimalQuantityInStock, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10 d-flex-row">
+                @Html.EditorFor(model => model.Product.MinimalQuantityInStock, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Product.MinimalQuantityInStock, "*", new { @class = "text-danger hidden errorIndicator" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Product.PriceWithoutTax, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10 d-flex-row">
+                @Html.EditorFor(model => model.Product.PriceWithoutTax, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Product.PriceWithoutTax, "*", new { @class = "text-danger hidden errorIndicator" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Categories, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.DropDownList(name: "ddlCategories", optionLabel: "-- Choose ---", selectList: ddlCategories, htmlAttributes: new { @class = "form-control" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Product.Subcategory, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.DropDownList(name: "ddlSubcategories", optionLabel: "No subcategories", selectList: ddlCategories, htmlAttributes: new { @class = "form-control" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </div>
+    </div>
+}
+
+<div>
+    @Html.ActionLink("Back to List", "Index")
+</div>

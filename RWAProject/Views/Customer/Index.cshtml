@@ -1,0 +1,105 @@
+﻿@{
+    ViewBag.Title = "Customers";
+}
+
+<h2>Customers</h2>
+
+@section scripts{
+    <script>
+        const dataTableConfig = {
+            ajax: {
+                url: '/api/customers',
+                dataSrc: ''
+            },
+            columns: [
+                { data: 'FirstName' },
+                { data: 'LastName' },
+                {
+                    data: 'Email',
+                    render: function (email) {
+                        return `<a href="mailto:${email}">${email}</a>`;
+                    }
+                },
+                { data: 'Phone' },
+                { data: 'Country' },
+                { data: 'City' },
+                {
+                    data: '',
+                    render: function (data, type, customer) {
+                        return `<button
+                                                                    class="btn btn-primary"
+                                                                    data-id=${customer.ID}>
+                                                                    View
+                                                                </button>`;
+                    }
+                },
+                {
+                    data: '',
+                    render: function (data, type, customer) {
+                        return `<button
+                                                                    class="btn btn-danger"
+                                                                    data-id=${customer.ID}
+                                                                    data-name=${customer.FirstName}
+                                                                    data-surname=${customer.LastName}>
+                                                                    Delete
+                                                                </button>`;
+                    }
+                }
+            ]
+        }
+
+        let btnDelete;
+
+        const table = $('.table').DataTable(dataTableConfig)
+            .on('click', '.btn-primary', onViewClick)
+            .on('click', '.btn-danger', onDeleteClick);
+
+        function onViewClick(e) {
+            const { id } = this.dataset;
+            window.location.href = '/Customer/Receipts/' + id;
+        }
+
+        function onDeleteClick(e) {
+            btnDelete = this;
+            const { id, name, surname } = btnDelete.dataset;
+
+            if (confirm(`Delete ${name} ${surname}?`)) {
+                deleteCustomer(id);
+            }
+        }
+
+        function deleteCustomer(id) {
+            $.ajax({
+                url: '/api/customers/' + id,
+                method: "delete"
+            })
+
+                .done(function (message) {
+                    console.log(message);
+                    table.row($(btnDelete).parents("tr"))
+                        .remove()
+                        .draw();
+                })
+                .fail(function () {
+                    console.log("Customer was not deleted");
+                });
+        }
+    </script>
+}
+
+<div class="jumbotron">
+    <table class="table">
+        <thead>
+            <tr>
+                <td>First name</td>
+                <td>Last name</td>
+                <td>Email</td>
+                <td>Phone</td>
+                <td>Country</td>
+                <td>City</td>
+                <td></td>
+                <td></td>
+            </tr>
+        </thead>
+    </table>
+</div>

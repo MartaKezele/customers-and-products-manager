@@ -1,0 +1,103 @@
+﻿@using RWAProject.Models;
+@{
+    ViewBag.Title = "Receipt details";
+    var customer = ViewBag.customer as Customer;
+    var receipt = ViewBag.receipt as Receipt;
+}
+
+@section scripts{
+    <script>
+        const dataTableConfig = {
+            ajax: {
+                url: '/api/items/' + @receipt.ID,
+                dataSrc: ''
+            },
+            columns: [
+                { data: 'Product' },
+                { data: 'Category' },
+                { data: 'Subcategory' },
+                { data: 'Quantity' },
+                { data: 'PriceByPiece' },
+                { data: 'Discount' },
+                { data: 'TotalPrice' },
+                {
+                    data: '',
+                    render: function (data, type, item) {
+                        return `<button
+                                    class="btn btn-danger"
+                                    data-id=${item.ID}>
+                                Delete
+                                </button>`;
+                    }
+                }
+            ]
+        }
+
+        let btnDelete;
+
+        const table = $('.table').DataTable(dataTableConfig)
+            .on('click', '.btn-danger', onDeleteClick);
+
+        function onDeleteClick(e) {
+            btnDelete = this;
+            const { id } = btnDelete.dataset;
+
+            if (confirm(`Delete item?`)) {
+                deleteItem(id);
+            }
+        }
+
+        function deleteItem(id) {
+            $.ajax({
+                url: '/api/items/' + id,
+                method: "delete"
+            })
+
+                .done(function (message) {
+                    console.log(message);
+                    table.row($(btnDelete).parents("tr"))
+                        .remove()
+                        .draw();
+                })
+                .fail(function () {
+                    console.log("Item was not deleted");
+                });
+        }
+    </script>
+}
+
+<h3>
+    Customer: @customer.FirstName @customer.LastName
+</h3>
+<h3>
+    Receipt: @receipt.ReceiptNumber
+</h3>
+<h3>
+    Items
+</h3>
+
+<div class="jumbotron">
+    <table class="table">
+        <thead>
+            <tr>
+                <td>Product</td>
+                <td>Category</td>
+                <td>Subcategory</td>
+                <td>Customer</td>
+                <td>Quantity</td>
+                <td>Price by piece</td>
+                <td>Discount</td>
+                <td>Total price</td>
+                <td></td>
+            </tr>
+        </thead>
+    </table>
+</div>
+
+@Html.ActionLink(
+    linkText: "< Receipts",
+    controllerName: "Customer",
+    htmlAttributes: new { @class = "btn btn-link" },
+    actionName: "Receipts",
+    routeValues: new { id = customer.ID })
+

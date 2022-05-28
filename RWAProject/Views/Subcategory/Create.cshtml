@@ -1,0 +1,106 @@
+﻿@model RWAProject.Models.ViewModels.SubcategoryCreateEditVm
+
+@{
+    ViewBag.Title = "Create";
+    SelectList ddlCategories = new SelectList(
+    items: Model.Categories,
+    dataTextField: "Name",
+    dataValueField: "ID");
+}
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+
+    <script>
+        $('form').on('submit', function (e) {
+
+            e.preventDefault();
+
+            const form = $(e.target);
+
+            const subcategory = {};
+
+            if (form.valid()) {
+
+                $('.validation-summary-errors').addClass("hidden");
+                $('.errorIndicator').addClass('hidden');
+
+                const params = form.serializeArray();
+
+                params.forEach(param => {
+                    if (param.name.lastIndexOf('__') !== -1) {
+                        return;
+                    }
+
+                    let propertyName = param.name.substr(param.name.lastIndexOf('.') + 1);
+                    if (propertyName === 'ddlCategories') {
+                        subcategory['CategoryID'] = param.value;
+                    }
+                    else {
+                        subcategory[propertyName] = param.value;
+                    }
+                })
+
+                $.ajax({
+                    url: `/api/subcategories/` + subcategory['ID'],
+                    data: subcategory,
+                    method: 'post',
+                    statusCode: {
+                        200: function () {
+                            $('.badge').html("Subcategory successfully created!");
+                            setTimeout(function () {
+                                window.location = '@Url.Action(controllerName:"Subcategory", actionName:"Index")'
+                            }, 2000)
+                        },
+                        400: function () {
+                            $('.badge').html("Subcategory was not created. :(");
+                        }
+                    }
+                })
+            }
+            else {
+                $('.validation-summary-errors').removeClass('hidden');
+                $('.field-validation-error').removeClass('hidden');
+            }
+        })
+    </script>
+}
+
+
+<h2>Create</h2>
+<span class="badge badge-primary"></span>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4>Subcategory</h4>
+        <hr />
+        @Html.ValidationSummary(false, "Warning", new { @class = "text-danger hidden" })
+        <div class="form-group">
+            @Html.LabelFor(model => model.Subcategory.Name, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10 d-flex-row">
+                @Html.EditorFor(model => model.Subcategory.Name, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Subcategory.Name, "*", new { @class = "text-danger hidden" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Categories, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10 d-felx-row">
+                @Html.DropDownList(name: "ddlCategories", selectList: ddlCategories, htmlAttributes: new { @class = "form-control" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </div>
+    </div>
+}
+
+<div>
+    @Html.ActionLink("Back to List", "Index")
+</div>

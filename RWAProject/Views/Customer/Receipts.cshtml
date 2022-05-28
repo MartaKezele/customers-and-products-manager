@@ -1,0 +1,110 @@
+﻿@using RWAProject.Models;
+@{
+    ViewBag.Title = "Receipts";
+    var customer = ViewBag.customer as Customer;
+}
+
+@section scripts{
+    <script>
+        const dataTableConfig = {
+            ajax: {
+                url: '/api/receipts/' + @customer.ID,
+                dataSrc: ''
+            },
+            columns: [
+                { data: 'DateOfPurchase' },
+                { data: 'ReceiptNumber' },
+                { data: 'Comment' },
+                { data: 'Customer' },
+                { data: 'Commercialist' },
+                { data: 'CreditCardType' },
+                { data: 'CreditCardNumber' },
+                {
+                    data: '',
+                    render: function (data, type, receipt) {
+                        return `<button
+                                    class="btn btn-primary"
+                                    data-id=${receipt.ID}>
+                                    View
+                                </button>`;
+                    }
+                },
+                {
+                    data: '',
+                    render: function (data, type, receipt) {
+                        return `<button
+                                    class="btn btn-danger"
+                                    data-id=${receipt.ID}>
+                                Delete
+                                </button>`;
+                    }
+                }
+            ]
+        }
+
+        let btnDelete;
+
+        const table = $('.table').DataTable(dataTableConfig)
+            .on('click', '.btn-primary', onViewClick)
+            .on('click', '.btn-danger', onDeleteClick);
+
+        function onViewClick(e) {
+            const { id } = this.dataset;
+            window.location.href = '/Receipt/Details/' + id;
+        }
+
+        function onDeleteClick(e) {
+            btnDelete = this;
+            const { id } = btnDelete.dataset;
+
+            if (confirm(`Delete receipt?`)) {
+                deleteReceipt(id);
+            }
+        }
+
+        function deleteReceipt(id) {
+            $.ajax({
+                url: '/api/receipts/' + id,
+                method: "delete"
+            })
+
+                .done(function (message) {
+                    console.log(message);
+                    table.row($(btnDelete).parents("tr"))
+                        .remove()
+                        .draw();
+                })
+                .fail(function () {
+                    console.log("Receipt was not deleted");
+                });
+        }
+    </script>
+}
+
+<h3>
+    Customer: @customer.FirstName @customer.LastName
+</h3>
+<h3>
+    Receipts
+</h3>
+
+<div class="jumbotron">
+    <table class="table">
+        <thead>
+            <tr>
+                <td>Date of purchase</td>
+                <td>Receipt number</td>
+                <td>Comment</td>
+                <td>Customer</td>
+                <td>Commercialist</td>
+                <td>Credit card type</td>
+                <td>Credit card number</td>
+                <td></td>
+                <td></td>
+            </tr>
+        </thead>
+    </table>
+</div>
+
+@Html.ActionLink(linkText: "< Customers", controllerName: "Customer", actionName: "Index")
+

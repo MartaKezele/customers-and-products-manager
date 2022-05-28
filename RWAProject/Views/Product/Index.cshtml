@@ -1,0 +1,111 @@
+﻿
+@{
+    ViewBag.Title = "Products";
+}
+
+@section scripts{
+    <script>
+        const dataTableConfig = {
+            ajax: {
+                url: '/api/products',
+                dataSrc: ''
+            },
+            columns: [
+                { data: 'Name' },
+                { data: 'Number' },
+                { data: 'Color' },
+                { data: 'MinimalQuantityInStock' },
+                { data: 'PriceWithoutTax' },
+                { data: 'Subcategory' },
+                { data: 'Category' },
+                {
+                    data: '',
+                    render: function (data, type, product) {
+                        return `<button
+                                        class="btn btn-primary"
+                                        data-id=${product.ID}>
+                                        Edit
+                                    </button>`;
+                    }
+                },
+                {
+                    data: '',
+                    render: function (data, type, product) {
+                        return `<button
+                                        class="btn btn-danger"
+                                        data-id=${product.ID}
+                                        data-name=${product.Name}>
+                                        Delete
+                                    </button>`;
+                    }
+                }
+            ]
+        }
+
+        let btnDelete;
+
+        const table = $('.table').DataTable(dataTableConfig)
+            .on('click', '.btn-primary', onEditClick)
+            .on('click', '.btn-danger', onDeleteClick);
+
+        function onEditClick(e) {
+            const { id } = this.dataset;
+            window.location.href = '/Product/Edit/' + id;
+        }
+
+        function onDeleteClick(e) {
+            btnDelete = this;
+            const { id, name } = btnDelete.dataset;
+
+            if (confirm(`Delete product ${name}?`)) {
+                deleteSubcategory(id);
+            }
+        }
+
+        function deleteSubcategory(id) {
+            $.ajax({
+                url: `/api/products/` + id,
+                method: "delete"
+            })
+
+                .done(function (message) {
+                    console.log(message);
+                    table.row($(btnDelete).parents("tr"))
+                        .remove()
+                        .draw();
+                })
+                .fail(function () {
+                    console.log("Product is not deleted.");
+                });
+        }
+    </script>
+}
+
+<h2>Products</h2>
+
+<p>
+    @Html.ActionLink(
+     linkText: "Create new",
+     actionName: "Create",
+     controllerName: "Product",
+     htmlAttributes: new { @class = "btn btn-success" },
+     routeValues: new { })
+</p>
+
+<div class="jumbotron">
+    <table class="table">
+        <thead>
+            <tr>
+                <td>Name</td>
+                <td>Number</td>
+                <td>Color</td>
+                <td>Minimal quantity in stock</td>
+                <td>Price without tax</td>
+                <td>Subcategory</td>
+                <td>Category</td>
+                <td></td>
+                <td></td>
+            </tr>
+        </thead>
+    </table>
+</div>

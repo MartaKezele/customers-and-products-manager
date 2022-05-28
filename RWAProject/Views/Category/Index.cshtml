@@ -1,0 +1,100 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+
+@section scripts{
+    <script>
+        const dataTableConfig = {
+            ajax: {
+                url: '/api/categories',
+                dataSrc: ''
+            },
+            columns: [
+                { data: 'Name' },
+                {
+                    data: '',
+                    render: function (data, type, category) {
+                        return `<button
+                                        class="btn btn-primary"
+                                        data-id=${category.ID}>
+                                        Edit
+                                    </button>`;
+                    }
+                },
+                {
+                    data: '',
+                    render: function (data, type, category) {
+                        return `<button
+                                            class="btn btn-danger"
+                                            data-id=${category.ID}
+                                            data-name=${category.Name}>
+                                            Delete
+                                        </button>`;
+                    }
+                }
+            ]
+        }
+
+        let btnDelete;
+
+        const table = $('.table').DataTable(dataTableConfig)
+            .on('click', '.btn-primary', onEditClick)
+            .on('click', '.btn-danger', onDeleteClick);
+
+        function onEditClick(e) {
+            const { id } = this.dataset;
+            window.location.href = '/Category/Edit/' + id;
+        }
+
+        function onDeleteClick(e) {
+            btnDelete = this;
+            const { id, name } = btnDelete.dataset;
+
+            if (confirm(`Delete category ${name}?`)) {
+                deleteCategory(id);
+            }
+        }
+
+        function deleteCategory(id) {
+            $.ajax({
+                url: `/api/categories/${id}`,
+                method: "delete"
+            })
+
+                .done(function (message) {
+                    console.log(message);
+                    table.row($(btnDelete).parents("tr"))
+                        .remove()
+                        .draw();
+                })
+                .fail(function () {
+                    console.log("Category is not deleted");
+                });
+        }
+    </script>
+}
+
+<h2>Categories</h2>
+
+<p>
+    @Html.ActionLink(
+     linkText: "Create new",
+     actionName: "Create",
+     controllerName: "Category",
+     htmlAttributes: new { @class = "btn btn-success" },
+     routeValues: new { })
+</p>
+
+<div class="jumbotron">
+    <table class="table">
+        <thead>
+            <tr>
+                <td>Name</td>
+                <td></td>
+                <td></td>
+            </tr>
+        </thead>
+    </table>
+</div>
+

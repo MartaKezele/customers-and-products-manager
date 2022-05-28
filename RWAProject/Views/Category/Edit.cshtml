@@ -1,0 +1,93 @@
+﻿@model RWAProject.Models.Category
+
+@{
+    ViewBag.Title = "Edit";
+}
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+
+    <script>
+        $('form').on('submit', function (e) {
+
+            e.preventDefault();
+
+            const form = $(e.target);
+
+            const category = {};
+
+            if (form.valid()) {
+
+                $('.validation-summary-errors').addClass("hidden");
+                $('.errorIndicator').addClass('hidden');
+
+                const params = form.serializeArray();
+                console.log(params);
+
+                params.forEach(param => {
+                    if (param.name.lastIndexOf('__') !== -1) {
+                        return;
+                    }
+
+                    category[param.name] = param.value;
+                })
+
+                console.log(category);
+
+                $.ajax({
+                    url: `/api/categories/` + category['ID'],
+                    data: category,
+                    method: 'put',
+                    statusCode: {
+                        200: function () {
+                            $('.badge').html("Category successfully updated!");
+                            setTimeout(function () {
+                                window.location = '@Url.Action(controllerName:"Category", actionName:"Index")'
+                            }, 2000)
+                        },
+                        400: function () {
+                            $('.badge').html("Category was not updated. :(");
+                        }
+                    }
+                })
+            }
+            else {
+                $('.validation-summary-errors').removeClass('hidden');
+                $('.field-validation-error').removeClass('hidden');
+            }
+        })
+    </script>
+}
+
+<h2>Edit</h2>
+<span class="badge badge-primary"></span>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4>Category</h4>
+        <hr />
+        @Html.ValidationSummary(false, "Warning", new { @class = "text-danger hidden" })
+        @Html.HiddenFor(model => model.ID)
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Name, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10 d-flex-row">
+                @Html.EditorFor(model => model.Name, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Name, "*", new { @class = "text-danger hidden" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </div>
+    </div>
+}
+
+<div>
+    @Html.ActionLink("Back to List", "Index")
+</div>
